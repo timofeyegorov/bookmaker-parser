@@ -2,18 +2,28 @@ import requests
 from bs4 import BeautifulSoup
 
 def get_match_result(soup):
+    '''
+        Функция получает результат матча
+        :return возвращает названия команд и результат матча
+    '''
+    # Получаем блок с результатми матча
     match_result = soup.find('div', class_='match-complete block block-section')
+    # Получаем название первой команды
     team_1 = match_result.findAll('span', class_='heading heading-3')[-1].get_text().replace('\n', '').split(' — ')[0]
+    # Получаем название второй команды
     team_2 = match_result.findAll('span', class_='heading heading-3')[-1].get_text().replace('\n', '').split(' — ')[1]
+    # Получаем количество голов первой команды
     team_1_goals = match_result.findAll('span', class_='heading heading-3')[0].get_text().replace('\n', '')[0]
+    # Получаем количество голов второй команды
     team_2_goals = match_result.findAll('span', class_='heading heading-3')[0].get_text().replace('\n', '')[2]
+    # Получаем дату матча
     match_date = match_result.find('span', class_='heading heading-4').get_text().replace('\n', '')
     # print(team_1, team_2, team_1_goals, team_2_goals, match_date)
     match_result_list = [team_1, team_2, team_1_goals, team_2_goals, match_date]
 
     return team_1, team_2, match_result_list
 
-def get_text_info(soup):
+def get_text_info(soup, team_1, team_2):
     '''
         Парсинг текстовой информации о матче
         :return стадион, судья, турнирные расклады, инфу о хозяевах, инфу о гостях, инфу для ставок
@@ -42,24 +52,17 @@ def get_text_info(soup):
 
     bet_info_soup = add_info.split('<h3>Информация для ставок</h3>')[-1]
     bet_info = BeautifulSoup(bet_info_soup, 'html.parser')
-    bet_info = bet_info.get_text().replace('\n', '')
+    bet_info = bet_info.get_text().replace('\n\n\n\n', '').replace(' \n', ' ')
 
     text_info_list = [about_match, tournament_layouts, about_team_1, about_team_2, bet_info]
-
-    print(about_match)
-    print()
-    print(tournament_layouts)
-    print()
-    print(about_team_1)
-    print()
-    print(about_team_2)
-    print()
-    print(bet_info)
     return text_info_list
 
-def get_coefs(soup):
+def get_coefs(soup, bookmaker_list):
+    '''
+        Функция парсит все данные по коэффициентам выбранных букмекеров
+        :return список коэффициентов
+    '''
     get_coefs_list = []
-    bookmaker_list = ['1хСтавка', 'Winline', 'Fonbet']
     coefs_table = soup.find('table', class_='match-odds-table')
     rows = coefs_table.findAll("tr", class_="inactive")
     for row in rows:
@@ -74,15 +77,153 @@ def get_coefs(soup):
                 get_coefs_list.append(coef.get_text().replace('\n', '. '))
     return get_coefs_list
 
+def get_personal_meetings(soup):
+    '''
+        Функция парсит результаты последних встреч между командами
+        :return список с результатами последних встреч
+    '''
+    personal_meetings_block = soup.find('div',
+                                        class_='matches-history_football matches-history block-section teams-meets-block')
+    personal_meetings_list = []
+    meetings_info = personal_meetings_block.findAll('div', class_=['category', 'match-score'])
+    for idx, info in enumerate(meetings_info):
+        if info['class'] == ['category']:
+            personal_meetings_list.append(info.get_text())
+        elif info['class'] == ['match-score']:
+            match_date = info.find('div', class_='grey-text').get_text()
+            owner = info.find('div', class_='top-side').find('div',
+                                                             class_=['left-side', 'green-text left-side']).get_text()
+            guest = info.find('div', class_='top-side').find('div',
+                                                             class_=['right-side', 'green-text right-side']).get_text()
+            owner_goals = info.findAll('div', class_='number')[0].get_text()
+            guest_goals = info.findAll('div', class_='number')[1].get_text()
+            if meetings_info[idx - 1]['class'] == ['category']:
+                personal_meetings_list.extend([match_date, owner, guest, owner_goals, guest_goals])
+            elif meetings_info[idx - 1]['class'] == ['match-score']:
+                personal_meetings_list.append(meetings_info[idx - 2].get_text())
+                personal_meetings_list.extend([match_date, owner, guest, owner_goals, guest_goals])
+    return personal_meetings_list
+
+def match_history(match):
+    '''
+        Функция парсит все данные по матчу из истории
+        : return спсиок с результатми матча
+    '''
+    match_date = match.find('div', class_='grey-text').get_text()
+    owner = match.find('div', class_='top-side').find('div',
+                                                      class_=['left-side', 'left-side bold']).get_text().replace(' ',
+                                                                                                                '')
+    guest = match.find('div', class_='top-side').find('div', class_=['right-side', 'right-side bold']).get_text()
+    owner_goals = match.findAll('div', class_='number')[0].get_text()
+    guest_goals = match.findAll('div', class_='number')[1].get_text()
+    match_history = [match_date, owner, guest, owner_goals, guest_goals]
+    return match_history
+
+def get_matches_history(soup):
+    '''
+        Функция получения истории результатов последних матчей
+        :return список с результатми последних матчей в турнире, снчала хозяев, потом гостей
+    '''
+    # Парсим блок с результатами
+    matches_history = soup.findAll('div', class_='matches-history-block block')
+    # Получаем блок с реузльтатми хозяев
+    matches_history_owner = matches_history[0].findAll('div', class_='match-score')
+    # Получаем блок с реузльтатми гостей
+    matches_history_guest = matches_history[1].findAll('div', class_='match-score')
+    matches_history_list = [] # Список для храниния всех результатов
+
+    # Проходим по каждому матчу хозяев, аппендим данные в список
+    for match in matches_history_owner:
+        curr_match = match_history(match)
+        matches_history_list.extend(curr_match)
+
+    # Проходим по каждому матчу гостей, аппендим данные в список
+    for match in matches_history_guest:
+        curr_match = match_history(match)
+        matches_history_list.extend(curr_match)
+
+    return matches_history_list
+
+def get_current_results(soup, team_1, team_2):
+    # Парсим положение в турнирной таблице на текущий момент
+    # Получаем таблицу с результатми всех команд
+    owner_result = []
+    guest_result = []
+
+    tournament_table = soup.find('table', class_='tournament-table tournament-table_match with-uniforms')
+    teams = tournament_table.findAll('tr', class_=['current', '', 'promotion', 'relegation'])
+    all_points = []
+    for idx, team in enumerate(teams):
+        team_name = team.find('div', class_='team-caption').get_text()
+        all_points.append(team.findAll('td')[6].get_text())
+        if team_name[:-1] in team_1:
+            team_name = team_1
+            position = idx + 1
+            perspectives = team.find('div', class_='qualification-status')['title']
+            plays = team.findAll('td')[1].get_text()
+            wins = team.findAll('td')[2].get_text()
+            draws = team.findAll('td')[3].get_text()
+            defeats = team.findAll('td')[4].get_text()
+            goals_scored = team.findAll('td')[5].get_text().split(':')[0]
+            goals_missed = team.findAll('td')[5].get_text().split(':')[1]
+            points = team.findAll('td')[6].get_text()
+
+            owner_result.extend([team_name, position, perspectives, wins, draws, defeats, goals_scored, goals_missed])
+
+            for i in reversed(range(1, 4)):
+                if teams[idx - i].findAll('td')[6].get_text() > points:
+                    owner_result.append(teams[idx - i].findAll('td')[6].get_text())
+                else:
+                    owner_result.append('0')
+            owner_result.append(points)
+            for i in range(1, 4):
+                if teams[idx + i].findAll('td')[6].get_text() < points:
+                    owner_result.append(teams[idx + i].findAll('td')[6].get_text())
+                else:
+                    owner_result.append(0)
+
+        elif team_name[:-1] in team_2:
+            team_name = team_2
+            position = idx + 1
+            perspectives = team.find('div', class_='qualification-status')['title']
+            plays = team.findAll('td')[1].get_text()
+            wins = team.findAll('td')[2].get_text()
+            draws = team.findAll('td')[3].get_text()
+            defeats = team.findAll('td')[4].get_text()
+            goals_scored = team.findAll('td')[5].get_text().split(':')[0]
+            goals_missed = team.findAll('td')[5].get_text().split(':')[1]
+            points = team.findAll('td')[6].get_text()
+
+            guest_result.extend(
+                [team_name, position, perspectives, wins, draws, defeats, goals_scored, goals_missed, points])
+
+            for i in reversed(range(1, 4)):
+                if teams[idx - i].findAll('td')[6].get_text() > points:
+                    guest_result.append(teams[idx - i].findAll('td')[6].get_text())
+                else:
+                    guest_result.append('0')
+            guest_result.append(points)
+            for i in range(1, 4):
+                if teams[idx + i].findAll('td')[6].get_text() < points:
+                    guest_result.append(teams[idx + i].findAll('td')[6].get_text())
+                else:
+                    guest_result.append(0)
+    return owner_result, guest_result
+
 if __name__ == '__main__':
     url = 'https://legalbet.ru/match-center/brighton-and-hove-albion-manchester-city-15-05-2021/'
     response = requests.get(url)
     soup = BeautifulSoup(response.text, 'html.parser')
 
     team_1, team_2, match_result_list = get_match_result(soup)
-    text_info_list = get_text_info(soup)
-    get_coefs_list = get_coefs(soup)
+    text_info_list = get_text_info(soup, team_1, team_2)
+    coefs_list = get_coefs(soup, bookmaker_list)
+    personal_meetings_list = get_personal_meetings(soup)
+    matches_history_list = get_matches_history(soup)
+    owner_result, guest_result = get_current_results(soup, team_1, team_2)
 
     # print(match_result_list)
     # print(text_info_list)
-    # print(get_coefs_list)
+    # print(coefs_list)
+    # print(personal_meetings_list)
+    # print(matches_history_list)

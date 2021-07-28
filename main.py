@@ -1,60 +1,60 @@
 import requests
 from bs4 import BeautifulSoup
-from functions import get_match_result, get_text_info, get_coefs
+from functions import get_match_result, get_text_info, get_coefs, get_personal_meetings
+from functions import match_history, get_matches_history, get_current_results
+import time
+import random
 
-url = 'https://legalbet.ru/match-center/brighton-and-hove-albion-manchester-city-15-05-2021/'
-response = requests.get(url)
-soup = BeautifulSoup(response.text, 'html.parser')
+season_classes =\
+    ['tab-panel js-archive-season-tab-201 active',
+     'tab-panel js-archive-season-tab-131',
+     'tab-panel js-archive-season-tab-126',
+     'tab-panel js-archive-season-tab-116',
+     'tab-panel js-archive-season-tab-106',
+     'tab-panel js-archive-season-tab-76',
+     'tab-panel js-archive-season-tab-2']
 
-team_1, team_2, match_result_list = get_match_result(soup)
-# text_info_list = get_text_info(soup)
-# get_coefs_list = get_coefs(soup)
+# Ссылка на страницу со всеми матчами выбранного сезона
+season_url = 'https://legalbet.ru/match-center/tournaments/england-premer-liga/'
+response_season = requests.get(season_url)
+soup_season = BeautifulSoup(response_season.text, 'html.parser')
+print(soup_season.findAll('div', class_='block-section'))
 
+# for season_class in season_classes[:1]:
+#     print(season_class)
+#     rounds = soup_season.find('div', class_=season_class)
+#     print(rounds)
+#     for round in rounds[:1]:
+#         print(round)
+#         matches = round.findAll('td', class_='match-td')
+#         for match in matches[:2]:
+#             match_url = match.find('a', class_='link')
+#             print(match_url)
 
-'''
-    Парсинг текстовой информации о матче
-    :return стадион, судья, турнирные расклады, инфу о хозяевах, инфу о гостях, инфу для ставок
-'''
-# Получаем блок с текстовой инфой о предстоящем матче
-add_info = soup.find('div', class_='content-body body post-body match-lead no-paddings without-margins')
-# Выцепляем инфу о стадионе и судье
-stadium = add_info.find('div', class_='match-stadium').get_text()
-referee = add_info.find('div', class_='match-referee').get_text()
-
-# Получаем блок в текстом формате после инфы о судье
-info_temp = add_info.get_text().replace('\n', '')
-info_temp = info_temp.split('О матче')[1]
-
-# Получаем дополнительные текстовые разделители
-add_info = str(add_info)
-# first_team_split == название первой команды + первые несколько букв текста за ним (пример: «Брайтон»Подоп)
-first_team_split = add_info.split(f'<h3>«{team_1}»</h3><p>')[1][:5]
-# first_team_split == название второй команды + первые несколько букв текста за ним (пример: «Брайтон»Подоп)
-second_team_split = add_info.split(f'<h3>«{team_2}»</h3><p>')[1][:5]
-
-# print(first_team_split)
-# about_match = info_temp.split('Турнирные расклады')[0]
-# tournament_layouts = f'«{team_1}»' + info_temp.split('Турнирные расклады')[1].split(first_team_split)[0].replace(f'«{team_1}»', '')
-# about_team_1 = first_team_split + \
-#                info_temp.split(f'«{team_1}»' + first_team_split)[1].split(f'«{team_2}»' + second_team_split)[0]
-# about_team_2 = second_team_split + info_temp.split(f'«{team_2}»' + second_team_split)[1].split('Информация для ставок')[0]
-bet_info = info_temp.split('Турнирные расклады')[1].split('Информация для ставок')[1]
-
-# add_info = soup.find('div', class_='content-body body post-body match-lead no-paddings without-margins')
-# bet_info_2 = add_info
+# bookmaker_list = ['1хСтавка', 'Winline', 'Fonbet']
+# url = 'https://legalbet.ru/match-center/brighton-and-hove-albion-manchester-city-15-05-2021/'
+# response = requests.get(url)
+# soup = BeautifulSoup(response.text, 'html.parser')
 #
+# team_1, team_2, match_result_list = get_match_result(soup)
+# text_info_list = get_text_info(soup, team_1, team_2)
+# coefs_list = get_coefs(soup, bookmaker_list)
+# personal_meetings_list = get_personal_meetings(soup)
+# matches_history_list = get_matches_history(soup)
+# owner_result, guest_result = get_current_results(soup, team_1, team_2)
 
-# print(add_info.split('<h3>Информация для ставок</h3>')[-1])
-x1 = add_info.split('<h3>Информация для ставок</h3>')[-1]
-x2 = BeautifulSoup(x1, 'html.parser')
-print(x2.get_text())
-# Корректировка, чтобы корректно разбелялись блоки в Информация для ставок
-
-# Парсим результаты последных личных встреч
-
-
-# Парсим результаты последных встреч в турнире
+# Генерируем задержку до следующего запроса от 1 до 11 секунд
+value = random.random()  # Генерируем случайное число от 0 до 1
+time_sleep = 1 + value * 10  # Добавляем случайное число к единице
+print(f'Задержка до следующего запроса: {round(time_sleep, 1)} сек')
+time.sleep(time_sleep)  # Откладываем исполнение кода на time_sleep секунд
+print('--------------------------------')
 
 
-# Парсим положение в турнирной таблице на текущий момент
+# Парсим назвние сезона, название турнира
 
+
+# Проведенные игры
+# Игры до конца сезона
+# очки до значимого места
+# очки ближайших соперников
