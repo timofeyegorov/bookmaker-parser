@@ -21,7 +21,7 @@ def get_match_result(soup):
     # print(team_1, team_2, team_1_goals, team_2_goals, match_date)
     match_result_list = [team_1, team_2, team_1_goals, team_2_goals, match_date]
 
-    return team_1, team_2, match_result_list
+    return team_1, team_2, match_date, match_result_list
 
 def get_text_info(soup, team_1, team_2):
     '''
@@ -171,17 +171,22 @@ def get_current_results(soup, team_1, team_2):
             owner_result.extend([team_name, position, perspectives, wins, draws, defeats, goals_scored, goals_missed])
 
             for i in reversed(range(1, 4)):
-                if teams[idx - i].findAll('td')[6].get_text() > points:
-                    owner_result.append(teams[idx - i].findAll('td')[6].get_text())
-                else:
+                try:
+                    if teams[idx - i].findAll('td')[6].get_text() > points:
+                        owner_result.append(teams[idx - i].findAll('td')[6].get_text())
+                    else:
+                        owner_result.append('0')
+                except IndexError:
                     owner_result.append('0')
             owner_result.append(points)
             for i in range(1, 4):
-                if teams[idx + i].findAll('td')[6].get_text() < points:
-                    owner_result.append(teams[idx + i].findAll('td')[6].get_text())
-                else:
-                    owner_result.append(0)
-
+                try:
+                    if teams[idx + i].findAll('td')[6].get_text() < points:
+                        owner_result.append(teams[idx + i].findAll('td')[6].get_text())
+                    else:
+                        owner_result.append(0)
+                except IndexError:
+                    owner_result.append('0')
         elif team_name[:-1] in team_2:
             team_name = team_2
             position = idx + 1
@@ -198,16 +203,22 @@ def get_current_results(soup, team_1, team_2):
                 [team_name, position, perspectives, wins, draws, defeats, goals_scored, goals_missed, points])
 
             for i in reversed(range(1, 4)):
-                if teams[idx - i].findAll('td')[6].get_text() > points:
-                    guest_result.append(teams[idx - i].findAll('td')[6].get_text())
-                else:
-                    guest_result.append('0')
+                try:
+                    if teams[idx - i].findAll('td')[6].get_text() > points:
+                        guest_result.append(teams[idx - i].findAll('td')[6].get_text())
+                    else:
+                        guest_result.append('0')
+                except IndexError:
+                    owner_result.append('0')
             guest_result.append(points)
             for i in range(1, 4):
-                if teams[idx + i].findAll('td')[6].get_text() < points:
-                    guest_result.append(teams[idx + i].findAll('td')[6].get_text())
-                else:
-                    guest_result.append(0)
+                try:
+                    if teams[idx + i].findAll('td')[6].get_text() < points:
+                        guest_result.append(teams[idx + i].findAll('td')[6].get_text())
+                    else:
+                        guest_result.append(0)
+                except IndexError:
+                    owner_result.append('0')
     return owner_result, guest_result
 
 if __name__ == '__main__':
