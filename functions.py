@@ -15,9 +15,9 @@ def get_match_result(soup):
     # Получаем название второй команды
     team_2 = match_result.findAll('span', class_='heading heading-3')[-1].get_text().replace('\n', '').split(' — ')[1]
     # Получаем количество голов первой команды
-    team_1_goals = match_result.findAll('span', class_='heading heading-3')[0].get_text().replace('\n', '')[0]
+    team_1_goals = match_result.findAll('span', class_='heading heading-3')[0].get_text().replace('\n', '').replace(' ', '')[0]
     # Получаем количество голов второй команды
-    team_2_goals = match_result.findAll('span', class_='heading heading-3')[0].get_text().replace('\n', '')[2]
+    team_2_goals = match_result.findAll('span', class_='heading heading-3')[0].get_text().replace('\n', '').replace(' ', '')[2]
     # Получаем дату матча
     match_date = match_result.find('span', class_='heading heading-4').get_text().replace('\n', '')
     # print(team_1, team_2, team_1_goals, team_2_goals, match_date)
@@ -110,25 +110,37 @@ def get_personal_meetings(soup):
     personal_meetings_block = soup.find('div',
                                         class_='matches-history_football matches-history block-section teams-meets-block')
     personal_meetings_list = []
-    meetings_info = personal_meetings_block.findAll('div', class_=['category', 'match-score'])
-    for idx, info in enumerate(meetings_info):
-        if info['class'] == ['category']:
-            personal_meetings_list.append(info.get_text())
-        elif info['class'] == ['match-score']:
-            match_date = info.find('div', class_='grey-text').get_text()
-            owner = info.find('div', class_='top-side').find('div',
-                                                             class_=['left-side', 'green-text left-side']).get_text()
-            guest = info.find('div', class_='top-side').find('div',
-                                                             class_=['right-side', 'green-text right-side']).get_text()
-            owner_goals = info.findAll('div', class_='number')[0].get_text()
-            guest_goals = info.findAll('div', class_='number')[1].get_text()
-            if meetings_info[idx - 1]['class'] == ['category']:
-                personal_meetings_list.extend([match_date, owner, guest, owner_goals, guest_goals])
-            elif meetings_info[idx - 1]['class'] == ['match-score']:
-                personal_meetings_list.append(meetings_info[idx - 2].get_text())
-                personal_meetings_list.extend([match_date, owner, guest, owner_goals, guest_goals])
-    if len(personal_meetings_list) < 30:
+    try:
+        meetings_info = personal_meetings_block.findAll('div', class_=['category', 'match-score'])
+        for idx, info in enumerate(meetings_info):
+            if info['class'] == ['category']:
+                personal_meetings_list.append(info.get_text())
+            elif info['class'] == ['match-score']:
+                match_date = info.find('div', class_='grey-text').get_text()
+                owner = info.find('div', class_='top-side').find('div',
+                                                                 class_=['left-side', 'green-text left-side']).get_text()
+                guest = info.find('div', class_='top-side').find('div',
+                                                                 class_=['right-side', 'green-text right-side']).get_text()
+                try:
+                    owner_goals = info.findAll('div', class_='number')[0].get_text()
+                    guest_goals = info.findAll('div', class_='number')[1].get_text()
+                    if meetings_info[idx - 1]['class'] == ['category']:
+                        personal_meetings_list.extend([match_date, owner, guest, owner_goals, guest_goals])
+                    elif meetings_info[idx - 1]['class'] == ['match-score']:
+                        personal_meetings_list.append(meetings_info[idx - 2].get_text())
+                        personal_meetings_list.extend([match_date, owner, guest, owner_goals, guest_goals])
+                except IndexError:
+                    if meetings_info[idx - 1]['class'] == ['category']:
+                        personal_meetings_list.pop(-1)
+
+
+        if len(personal_meetings_list) < 30:
+            personal_meetings_list.extend([0 for i in range(30 - len(personal_meetings_list))])
+
+    # Если истории нет
+    except AttributeError:
         personal_meetings_list.extend([0 for i in range(30 - len(personal_meetings_list))])
+
     return personal_meetings_list[:30]
 
 def match_history(match):
@@ -228,7 +240,7 @@ def get_current_results(soup, team_1, team_2):
 
             for i in reversed(range(1, 4)):
                 try:
-                    if teams[idx - i].findAll('td')[6].get_text() > points:
+                    if teams[idx - i].findAll('td')[6].get_text() >= points:
                         owner_result.append(teams[idx - i].findAll('td')[6].get_text())
                     else:
                         owner_result.append('0')
@@ -237,7 +249,7 @@ def get_current_results(soup, team_1, team_2):
             owner_result.append(points)
             for i in range(1, 4):
                 try:
-                    if teams[idx + i].findAll('td')[6].get_text() < points:
+                    if teams[idx + i].findAll('td')[6].get_text() <= points:
                         owner_result.append(teams[idx + i].findAll('td')[6].get_text())
                     else:
                         owner_result.append(0)
