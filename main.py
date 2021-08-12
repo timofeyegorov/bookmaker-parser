@@ -16,6 +16,8 @@ import sys
 EPL = 'data_epl.csv'
 LaLiga = 'data_LaLiga.csv'
 serieA = 'data_serieA.csv'
+bundesliga = 'data_bundesliga.csv'
+
 
 # sys.stdout = open('console_output.txt', 'a')
 
@@ -23,7 +25,7 @@ bookmaker_list = ['1хСтавка', ' 1хСтавка ', 'Winline', ' Winline '
 
 driver = webdriver.Chrome(executable_path=r'C:\Users\User\PycharmProjects\bookmaker-parser\chromedriver.exe')
 base_url = 'https://legalbet.ru'
-url = 'https://legalbet.ru/match-center/tournaments/serie-a/'
+url = 'https://legalbet.ru/match-center/tournaments/bundesliga/'
 driver.get(url=url)
 
 tabs_for_click = driver.find_elements_by_class_name('tabs__item')
@@ -37,7 +39,7 @@ prev_season = 0
 start_time = time.time()
 
 columns = ['Сезон', 'Тур',
-           'Хоязяева', 'Гости', 'Голы хозяев', 'Голы гостей', 'Дата матча',
+           'Хозяева', 'Гости', 'Голы хозяев', 'Голы гостей', 'Дата матча',
            '1хСтавка', '1_а', 'Х_а', '2_а', 'ТМ 2.5_а', 'ТБ 2.5_а',
            'Winline', '1_б', 'Х_б', '2_б', 'ТМ 2.5_б', 'ТБ 2.5_б',
            'Fonbet', '1_в', 'Х_в', '2_в', 'ТМ 2.5_в', 'ТБ 2.5_в',
@@ -65,7 +67,7 @@ columns = ['Сезон', 'Тур',
            'Название команды_2', 'Позиция_2', 'Перспектива_2', 'Игры_2', 'Победы_2', 'Ничьи_2', 'Поражения_2', 'Забитые голы_2', 'Пропущенные голы_2',
            'очки +3 позиции_2', 'очки +2 позиции_2', 'очки +1 позиции_2', 'очки_2', 'очки -1 позиции_2', 'очки -2 позиции_2', 'очки -3 позиции_2'
            ]
-with open(serieA, 'a', newline='') as csvfile:
+with open(bundesliga, 'a', newline='') as csvfile:
     datawriter = csv.writer(csvfile, delimiter=';')
     datawriter.writerow(columns)
 
@@ -140,84 +142,89 @@ for i in range(num_seasons):
                             soup = BeautifulSoup(response_match.text, 'html.parser')
                             # try:
                             team_1, team_2, match_date, match_result_list = get_match_result(soup)
-                            # text_info_list = get_text_info(soup, team_1, team_2)
-                            try:
-                                coefs_list = get_coefs(soup, bookmaker_list)
-                            except AttributeError:
-                                # print(soup_coefs)
-                                coefs_list = ['Неизвестно']
-                                coefs_list.append(soup_coefs[idx].findAll('td', class_='odd-td')[0].get_text())
-                                coefs_list.append(soup_coefs[idx].findAll('td', class_='odd-td')[1].get_text())
-                                coefs_list.append(soup_coefs[idx].findAll('td', class_='odd-td')[2].get_text())
-                                coefs_list.append(soup_coefs[idx].findAll('td', class_='odd-td')[3].get_text())
-                                coefs_list.append(soup_coefs[idx].findAll('td', class_='odd-td')[4].get_text())
-                                add_info = ['ПРОВЕРИТЬ КОЭФФИЦИЕНТЫ: '] + coefs_list
+                            if team_1 == 0:
+                                print(f'Парсинг матча прерван, причина: {match_result_list}')
+                                print(f'Парсинг матча прерван, причина: {match_result_list}', \
+                                        file = open('console_output.txt', 'a'))
+                            else:
+                                # text_info_list = get_text_info(soup, team_1, team_2)
+                                try:
+                                    coefs_list = get_coefs(soup, bookmaker_list)
+                                except AttributeError:
+                                    # print(soup_coefs)
+                                    coefs_list = ['Неизвестно']
+                                    coefs_list.append(soup_coefs[idx].findAll('td', class_='odd-td')[0].get_text())
+                                    coefs_list.append(soup_coefs[idx].findAll('td', class_='odd-td')[1].get_text())
+                                    coefs_list.append(soup_coefs[idx].findAll('td', class_='odd-td')[2].get_text())
+                                    coefs_list.append(soup_coefs[idx].findAll('td', class_='odd-td')[3].get_text())
+                                    coefs_list.append(soup_coefs[idx].findAll('td', class_='odd-td')[4].get_text())
+                                    add_info = ['ПРОВЕРИТЬ КОЭФФИЦИЕНТЫ: '] + coefs_list
+                                    if check_len(coefs_list, 18):
+                                        coefs_list.extend([0 for i in range(18 - len(coefs_list))])
+                                personal_meetings_list = get_personal_meetings(soup)
+                                matches_history_list = get_matches_history(soup)
+                                owner_result, guest_result = get_current_results(soup, team_1, team_2)
+
+
+                                # Генерируем задержку до следующего запроса от 1 до 11 секунд
+                                value = random.random()  # Генерируем случайное число от 0 до 1
+                                time_sleep = 1 + value * 10  # Добавляем случайное число к единице
+                                # print(f'Задержка до следующего запроса: {round(time_sleep, 1)} сек')
+                                time.sleep(time_sleep)  # Откладываем исполнение кода на time_sleep секунд
+                                # print('--------------------------------')
+                                match_list = [curr_season, tour_num] +\
+                                             match_result_list +\
+                                             coefs_list +\
+                                             personal_meetings_list +\
+                                             matches_history_list +\
+                                             owner_result + guest_result
+                                data.append(match_list)
+                                # print(element.get_attribute("automationTrack"))
+                                print(f'(ИТОГО: {m_idx} игр) Завершен парсинг матча (№{season_m}) {team_1} - {team_2} сезона {curr_season}, {match_date}. {add_info}')
+                                print(f'(ИТОГО: {m_idx} игр) Завершен парсинг матча (№{season_m}) {team_1} - {team_2} сезона {curr_season}, {match_date}. {add_info}', \
+                                        file = open('console_output.txt', 'a'))
+                                if check_len(match_result_list, 5):
+                                    print('Список с результатами длинее 5 элементов (ожидается 5)')
+                                    print(match_result_list)
+                                    print('Список с результатами длинее 5 элементов (ожидается 5)', file = open('console_output.txt', 'a'))
+                                    print(match_result_list, file = open('console_output.txt', 'a'))
+                                # if check_len(text_info_list, 7):
+                                #     print('')
                                 if check_len(coefs_list, 18):
-                                    coefs_list.extend([0 for i in range(18 - len(coefs_list))])
-                            personal_meetings_list = get_personal_meetings(soup)
-                            matches_history_list = get_matches_history(soup)
-                            owner_result, guest_result = get_current_results(soup, team_1, team_2)
+                                    print(f'Список coefs_list не совпадает - {len(coefs_list)} элементов (ожидается 18)')
+                                    print(coefs_list)
+                                    print(f'Список coefs_list не совпадает - {len(coefs_list)} элементов (ожидается 18)', file = open('console_output.txt', 'a'))
+                                    print(coefs_list, file = open('console_output.txt', 'a'))
+                                if check_len(personal_meetings_list, 30):
+                                    print(f'Список personal_meetings_list не совпадает - {len(personal_meetings_list)} элементов (ожидается 30)')
+                                    print(personal_meetings_list)
+                                    print(f'Список personal_meetings_list не совпадает - {len(personal_meetings_list)} элементов (ожидается 30)', file = open('console_output.txt', 'a'))
+                                    print(personal_meetings_list, file = open('console_output.txt', 'a'))
+                                if check_len(matches_history_list, 70):
+                                    print(f'Список matches_history_list не совпадает - {len(matches_history_list)} элементов (ожидается 70)')
+                                    print(matches_history_list)
+                                    print(f'Список matches_history_list не совпадает - {len(matches_history_list)} элементов (ожидается 70)', file = open('console_output.txt', 'a'))
+                                    print(matches_history_list, file = open('console_output.txt', 'a'))
+                                if check_len(owner_result, 16):
+                                    print(f'Список owner_result не совпадает - {len(owner_result)} элементов (ожидается 16)')
+                                    print(owner_result)
+                                    print(f'Список owner_result не совпадает - {len(owner_result)} элементов (ожидается 16)', file = open('console_output.txt', 'a'))
+                                    print(owner_result, file = open('console_output.txt', 'a'))
+                                if check_len(guest_result, 16):
+                                    print(f'Список guest_result не совпадает - {len(guest_result)} элементов (ожидается 16)')
+                                    print(guest_result)
+                                    print(f'Список guest_result не совпадает - {len(guest_result)} элементов (ожидается 16)', file = open('console_output.txt', 'a'))
+                                    print(guest_result, file = open('console_output.txt', 'a'))
+                                with open(bundesliga, 'a', newline='') as csvfile:
+                                    datawriter = csv.writer(csvfile, delimiter=';')
+                                    datawriter.writerow(match_list)
 
-
-                            # Генерируем задержку до следующего запроса от 1 до 11 секунд
-                            value = random.random()  # Генерируем случайное число от 0 до 1
-                            time_sleep = 1 + value * 10  # Добавляем случайное число к единице
-                            # print(f'Задержка до следующего запроса: {round(time_sleep, 1)} сек')
-                            time.sleep(time_sleep)  # Откладываем исполнение кода на time_sleep секунд
-                            # print('--------------------------------')
-                            match_list = [curr_season, tour_num] +\
-                                         match_result_list +\
-                                         coefs_list +\
-                                         personal_meetings_list +\
-                                         matches_history_list +\
-                                         owner_result + guest_result
-                            data.append(match_list)
-                            # print(element.get_attribute("automationTrack"))
-                            print(f'(ИТОГО: {m_idx} игр) Завершен парсинг матча (№{season_m}) {team_1} - {team_2} сезона {curr_season}, {match_date}. {add_info}')
-                            print(f'(ИТОГО: {m_idx} игр) Завершен парсинг матча (№{season_m}) {team_1} - {team_2} сезона {curr_season}, {match_date}. {add_info}', \
-                                    file = open('console_output.txt', 'a'))
-                            if check_len(match_result_list, 5):
-                                print('Список с результатами длинее 5 элементов (ожидается 5)')
-                                print(match_result_list)
-                                print('Список с результатами длинее 5 элементов (ожидается 5)', file = open('console_output.txt', 'a'))
-                                print(match_result_list, file = open('console_output.txt', 'a'))
-                            # if check_len(text_info_list, 7):
-                            #     print('')
-                            if check_len(coefs_list, 18):
-                                print(f'Список coefs_list не совпадает - {len(coefs_list)} элементов (ожидается 18)')
-                                print(coefs_list)
-                                print(f'Список coefs_list не совпадает - {len(coefs_list)} элементов (ожидается 18)', file = open('console_output.txt', 'a'))
-                                print(coefs_list, file = open('console_output.txt', 'a'))
-                            if check_len(personal_meetings_list, 30):
-                                print(f'Список personal_meetings_list не совпадает - {len(personal_meetings_list)} элементов (ожидается 30)')
-                                print(personal_meetings_list)
-                                print(f'Список personal_meetings_list не совпадает - {len(personal_meetings_list)} элементов (ожидается 30)', file = open('console_output.txt', 'a'))
-                                print(personal_meetings_list, file = open('console_output.txt', 'a'))
-                            if check_len(matches_history_list, 70):
-                                print(f'Список matches_history_list не совпадает - {len(matches_history_list)} элементов (ожидается 70)')
-                                print(matches_history_list)
-                                print(f'Список matches_history_list не совпадает - {len(matches_history_list)} элементов (ожидается 70)', file = open('console_output.txt', 'a'))
-                                print(matches_history_list, file = open('console_output.txt', 'a'))
-                            if check_len(owner_result, 16):
-                                print(f'Список owner_result не совпадает - {len(owner_result)} элементов (ожидается 16)')
-                                print(owner_result)
-                                print(f'Список owner_result не совпадает - {len(owner_result)} элементов (ожидается 16)', file = open('console_output.txt', 'a'))
-                                print(owner_result, file = open('console_output.txt', 'a'))
-                            if check_len(guest_result, 16):
-                                print(f'Список guest_result не совпадает - {len(guest_result)} элементов (ожидается 16)')
-                                print(guest_result)
-                                print(f'Список guest_result не совпадает - {len(guest_result)} элементов (ожидается 16)', file = open('console_output.txt', 'a'))
-                                print(guest_result, file = open('console_output.txt', 'a'))
-                            with open(serieA, 'a', newline='') as csvfile:
-                                datawriter = csv.writer(csvfile, delimiter=';')
-                                datawriter.writerow(match_list)
-
-                            # except AttributeError:
-                            #     print(f'{m_idx}. Парсинг матча прерван')
-                            #     match_list = ['Нет данных/парсинг матча прерван']
-                            #     with open('data.csv', 'a', newline='') as csvfile:
-                            #         datawriter = csv.writer(csvfile, delimiter=';')
-                            #         datawriter.writerow(match_list)
+                                # except AttributeError:
+                                #     print(f'{m_idx}. Парсинг матча прерван')
+                                #     match_list = ['Нет данных/парсинг матча прерван']
+                                #     with open('data.csv', 'a', newline='') as csvfile:
+                                #         datawriter = csv.writer(csvfile, delimiter=';')
+                                #         datawriter.writerow(match_list)
 
         print(f'Парсинг сезона', curr_season, 'завершен')
         prev_season = curr_season
