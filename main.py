@@ -17,7 +17,7 @@ EPL = 'data_epl.csv'
 LaLiga = 'data_LaLiga.csv'
 serieA = 'data_serieA.csv'
 bundesliga = 'data_bundesliga.csv'
-
+ligue1 = 'data_ligue1.csv'
 
 # sys.stdout = open('console_output.txt', 'a')
 
@@ -25,7 +25,7 @@ bookmaker_list = ['1хСтавка', ' 1хСтавка ', 'Winline', ' Winline '
 
 driver = webdriver.Chrome(executable_path=r'C:\Users\User\PycharmProjects\bookmaker-parser\chromedriver.exe')
 base_url = 'https://legalbet.ru'
-url = 'https://legalbet.ru/match-center/tournaments/bundesliga/'
+url = 'https://legalbet.ru/match-center/tournaments/liga-1/'
 driver.get(url=url)
 
 tabs_for_click = driver.find_elements_by_class_name('tabs__item')
@@ -67,7 +67,7 @@ columns = ['Сезон', 'Тур',
            'Название команды_2', 'Позиция_2', 'Перспектива_2', 'Игры_2', 'Победы_2', 'Ничьи_2', 'Поражения_2', 'Забитые голы_2', 'Пропущенные голы_2',
            'очки +3 позиции_2', 'очки +2 позиции_2', 'очки +1 позиции_2', 'очки_2', 'очки -1 позиции_2', 'очки -2 позиции_2', 'очки -3 позиции_2'
            ]
-with open(bundesliga, 'a', newline='') as csvfile:
+with open(ligue1, 'a', newline='') as csvfile:
     datawriter = csv.writer(csvfile, delimiter=';')
     datawriter.writerow(columns)
 
@@ -220,7 +220,7 @@ for i in range(num_seasons):
                                     print(guest_result)
                                     print(f'Список guest_result не совпадает - {len(guest_result)} элементов (ожидается 16)', file = open('console_output.txt', 'a'))
                                     print(guest_result, file = open('console_output.txt', 'a'))
-                                with open(bundesliga, 'a', newline='') as csvfile:
+                                with open(ligue1, 'a', newline='') as csvfile:
                                     datawriter = csv.writer(csvfile, delimiter=';')
                                     datawriter.writerow(match_list)
 
