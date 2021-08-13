@@ -1,8 +1,0 @@
-(ИТОГО: 414 игр) Завершен парсинг матча (№34) Астон Вилла - Кристал Пэлас сезона 2019-2020, Матч завершен 12 июля 2020
-Traceback (most recent call last):
-  File "C:\Users\User\PycharmProjects\bookmaker-parser\main.py", line 117, in <module>
-    coefs_list = get_coefs(soup, bookmaker_list)
-  File "C:\Users\User\PycharmProjects\bookmaker-parser\functions.py", line 82, in get_coefs
-    rows = coefs_table.findAll("tr", class_="inactive")
-AttributeError: 'NoneType' object has no attribute 'findAll'
-

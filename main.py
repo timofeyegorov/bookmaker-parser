@@ -241,26 +241,9 @@ print('Парсинг лиги завершен')
 print(file = open('console_output.txt', 'a'))
 print('Парсинг лиги завершен', file = open('console_output.txt', 'a'))
 end_time = time.time() - start_time
-print('Затраченное время: ', int(round(end_time / 60, 0)), 'минут', int(round(end_time//2*60/100, 0)), 'секунд')
+print('Затраченное время: ', int(round(end_time / 60, 0)), 'минут', int(round(end_time//60*60, 0)), 'секунд')
 print('Затраченное время: ', int(round(end_time / 60, 0)), 'минут', int(round(end_time // 2 * 60 / 100, 0)),
               'секунд', file = open('console_output.txt', 'a'))
 driver.close()
 driver.quit()
 # sys.stdout.close()
-
-df_data = pd.DataFrame(data)
-
-df_data.to_csv('df_data')
-
-
-
-
-
-
-# Парсим назвние сезона, название турнира
-
-# Сезон
-# Проведенные игры
-# Игры до конца сезона
-# очки до значимого места
-# очки ближайших соперников
