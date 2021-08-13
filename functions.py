@@ -228,7 +228,7 @@ def get_current_results(soup, team_1, team_2):
     for idx, team in enumerate(teams):
         team_name = team.find('div', class_='team-caption').get_text()
         all_points.append(team.findAll('td')[6].get_text())
-        if team_name[:-1] in team_1:
+        if (team_name[:-1] in team_1):
             team_name = team_1
             position = idx + 1
             perspectives = team.find('div', class_='qualification-status')['title']
@@ -259,7 +259,7 @@ def get_current_results(soup, team_1, team_2):
                         owner_result.append(0)
                 except IndexError:
                     owner_result.append('0')
-        elif team_name[:-1] in team_2:
+        elif (team_name[:-1] in team_2):
             team_name = team_2
             position = idx + 1
             perspectives = team.find('div', class_='qualification-status')['title']

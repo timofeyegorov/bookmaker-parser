@@ -112,7 +112,12 @@ for i in range(num_seasons):
             if soup_tour != None:
                 # print(tour)
                 # print('---')
-                tour_num = soup_tour.get_text()
+                tour_num = soup_tour.get_text().replace('\n', '')
+                if tour_num == 'Переходные матчи':
+                    print(f'Парсинг матча прерван, причина: {tour_num}')
+                    print(f'Парсинг матча прерван, причина: {tour_num}', \
+                          file=open('console_output.txt', 'a'))
+                    continue
                 # print(tour_num)
                 # print('---')
                 soup_matches = tour.findAll(['td', 'th'], class_=['match-td', 'match-th'])
