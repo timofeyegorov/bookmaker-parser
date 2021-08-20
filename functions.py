@@ -83,26 +83,29 @@ def get_coefs(soup, bookmaker_list):
     '''
     get_coefs_list = []
     coefs_table = soup.find('table', class_='match-odds-table')
-    rows = coefs_table.findAll("tr", class_="inactive")
-    for row in rows:
-        cell = row.find('div', class_='title')
-        bookmaker_name = cell.get_text().replace('\n', '').replace(' ', '')
-        # print(cell)
-        # print()
-        # print(bookmaker_name)
-        # print('--------------------')
-        if bookmaker_name in bookmaker_list:
+    if coefs_table == None:
+        return -1
+    else:
+        rows = coefs_table.findAll("tr", class_="inactive")
+        for row in rows:
+            cell = row.find('div', class_='title')
+            bookmaker_name = cell.get_text().replace('\n', '').replace(' ', '')
+            # print(cell)
+            # print()
             # print(bookmaker_name)
-            get_coefs_list.append(bookmaker_name)
-            coefs = row.findAll('div', class_=['odd match-rates-marker', 'odd match-rates-marker best-odd', 'empty',
-                                               'odd match-rates-marker up trend-up', 'odd match-rates-marker down trend-down',
-                                               'odd match-rates-marker best-odd up trend-up'])
-            for coef in coefs:
-                # print(coef.get_text().replace('\n', ''))
-                get_coefs_list.append(coef.get_text().replace('\n', ''))
-    if check_len(get_coefs_list, 18):
-        get_coefs_list.extend([0 for i in range(18 - len(get_coefs_list))])
-    return get_coefs_list
+            # print('--------------------')
+            if bookmaker_name in bookmaker_list:
+                # print(bookmaker_name)
+                get_coefs_list.append(bookmaker_name)
+                coefs = row.findAll('div', class_=['odd match-rates-marker', 'odd match-rates-marker best-odd', 'empty',
+                                                   'odd match-rates-marker up trend-up', 'odd match-rates-marker down trend-down',
+                                                   'odd match-rates-marker best-odd up trend-up'])
+                for coef in coefs:
+                    # print(coef.get_text().replace('\n', ''))
+                    get_coefs_list.append(coef.get_text().replace('\n', ''))
+        if check_len(get_coefs_list, 18):
+            get_coefs_list.extend([0 for i in range(18 - len(get_coefs_list))])
+        return get_coefs_list
 
 def get_personal_meetings(soup):
     '''
